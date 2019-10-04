@@ -17,7 +17,7 @@ router.route('/')
     })
     .post((req, res) => {
         //validation input data --> error ? 400
-        res.end('Create a new food');
+        
     })
     .put((req, res) => {
         res.statusCode = 403;
