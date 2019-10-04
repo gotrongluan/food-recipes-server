@@ -24,9 +24,7 @@ router.route('/')
             try {
                 const foods = await getFoods(parseInt(page), parseInt(limit));
                 if (foods !== null) {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.json(wrapResponse(foods));
+                    res.successJson(wrapResponse(foods));
                 }
                 else {
                     //handle error
@@ -46,10 +44,7 @@ router.route('/')
             try {
                 const realFood = await food.save();
                 if (realFood !== null) {
-                    debug('New food is created!\n', realFood);
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.json(wrapResponse(realFood));
+                    res.successJson(wrapResponse(realFood));
                 }
                 else {
                     //handle error
@@ -92,9 +87,7 @@ router.route('/:foodId')
             try {
                 const food = await getFood(foodId);
                 if (food !== null) {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.json(wrapResponse(food));
+                    res.successJson(wrapResponse(food));
                 }
                 else {
                     next(createError(500));
@@ -120,9 +113,7 @@ router.route('/:foodId')
                     $set: updateData
                 }, { new: true });
                 if (updatedFood !== null) {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.json(wrapResponse(updatedFood));
+                    res.successJson(wrapResponse(updatedFood));
                 }
                 else {
                     next(createError(500));
@@ -144,9 +135,7 @@ router.route('/:foodId')
             try {
                 const removedFood = await Food.findByIdAndRemove(id);
                 if (removedFood !== null) {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.json(wrapResponse(removedFood));
+                    res.successJson(wrapResponse(removedFood));
                 }
                 else {
                     next(createError(500));

@@ -1,18 +1,51 @@
 const express = require('express');
 const router = express.Router();
+const createError = require('http-errors');
+const wrapResponse = require('../utils/wrapResponse');
+const debug = require('debug')('food-recipes-server:food-types');
+const FoodType = require('../models/foodTypes');
 
 router.route('/')
-    .all((req, res, next) => {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'text/plain');
-        next();
-    })
-    .get((req, res) => {
-        res.end('Return food types');
+    .get((req, res, next) => {
+        const getFoodTypes = async () => {
+            return await FoodType.find();
+        };
+
+        const run = async () => {
+            try {
+                const foodTypes = await getFoodTypes();
+                if (foodTypes !== null)
+                    res.successJson(wrapResponse(foodTypes));
+                else
+                    next(createError(500));
+            }
+            catch(err) {
+                next(err);
+            }
+        };
+
+        run();
     })
     .post((req, res) => {
         //validation input data --> error ? 400
-        res.end('Create a new food type');
+        const saveFoodType = async foodType => {
+            try {
+                const realFoodType = await foodType.save();
+                if (realFoodType !== null)
+                    res.successJson(wrapResponse(realFoodType));
+                else
+                    next(createError(500));
+            }
+            catch (err) {
+                next(err);
+            }
+        };
+        const newFoodType = FoodType({
+            key: req.body.key,
+            name: req.body.name,
+            icon: req.body.icon
+        });
+        saveFoodType(newFoodType);
     })
     .put((req, res) => {
         res.statusCode = 403;

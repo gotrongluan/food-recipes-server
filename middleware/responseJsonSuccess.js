@@ -1,12 +1,10 @@
-const responseJsonSuccess = (req, res) => {
-    res = {
-        ...res,
-        successJson: data => {
-            this.statusCode = 200;
-            this.setHeader('Content-Type', 'application/json');
-            this.json(data);
-        }
-    }
+const responseJsonSuccess = (req, res, next) => {
+    res.successJson = data => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(data);
+    };
+    next();
 }
 
 module.exports = responseJsonSuccess;
