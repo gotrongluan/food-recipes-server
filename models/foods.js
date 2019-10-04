@@ -12,7 +12,6 @@ const ingredientSchema = new Schema({
     },
     unit: {
         type: String,
-        maxlength: 10,
         minlength: 1,
         lowercase: true,
         default: 'mg'
@@ -30,7 +29,6 @@ const foodSchema = new Schema({
     },
     ingredients: {
         type: [ ingredientSchema ],
-        default: [],
     },
     steps: {
         type: String,
