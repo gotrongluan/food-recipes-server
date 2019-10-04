@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const responseJsonSuccess = require('./middleware/responseJsonSuccess');
 const debug = require('debug')('food-recipes-server:app');
 const config = require('config');
 const connectToDatabase = require('./utils/connectToDatabase');
@@ -28,6 +29,7 @@ if (app.get('env') === 'development') {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(responseJsonSuccess);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
