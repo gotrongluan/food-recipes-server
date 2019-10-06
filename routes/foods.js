@@ -3,67 +3,49 @@ const _ = require('lodash');
 const createError = require('http-errors');
 const express = require('express');
 const router = express.Router();
-const Food = require('../models/foods');
+const { Food, validate } = require('../models/foods');
 const wrapResponse = require('../utils/wrapResponse');
 
 
 router.route('/')
-    .get((req, res, next) => {
+    .get(async (req, res, next) => {
         if (process.env.NODE_ENV === 'development') {
             debug('Request queries: ', req.query);
         }
-        const getFoods = async (page, limit) => {
-            return await Food.find()
+        let { page = 1, limit = 10 } = req.query;
+        page = parseInt(page);
+        limit = parseInt(limit);
+        try {
+            const foods = await Food.find()
                 .sort('-updatedAt')
                 .skip((page - 1) * limit)
                 .limit(limit);
-        };
-        
-        const run = async () => {
-            const { page = 1, limit = 10 } = req.query;
-            try {
-                const foods = await getFoods(parseInt(page), parseInt(limit));
-                if (foods !== null) {
-                    res.successJson(wrapResponse(foods));
-                }
-                else {
-                    //handle error
-                    next(createError(500));
-                }
-            }
-            catch (err) {
-                next(err);
-            }
+            res.successJson(wrapResponse(foods));
         }
-        
-        run();     
+        catch (err) {
+            next(err);
+        }    
     })
-    .post((req, res, next) => {
-        //validation input data --> error ? 400
-        const saveFood = async (food) => {
-            try {
-                const realFood = await food.save();
-                if (realFood !== null) {
-                    res.successJson(wrapResponse(realFood));
-                }
-                else {
-                    //handle error
-                    next(createError(500));
-                }
-            }
-            catch (err) {
-                debug('Error\n', err);
-                next(err);
-            }
-        };
-
+    .post(async (req, res, next) => {
+        const { error: validateError } = validate(req.body);
+        if (validateError) {
+            debug('Error ', validateError.details[0].message);
+            next(createError(400));
+            return;
+        }
         const newFood = new Food({
             name: req.body.name,
             avatar: req.body.avatar,
             steps: req.body.steps,
             ingredients: [...req.body.ingredients],
         });
-        saveFood(newFood);
+        try {
+            const realFood = await newFood.save();
+            res.successJson(wrapResponse(realFood));
+        }
+        catch (err) {
+            next(err);
+        }
         
     })
     .put((req, res) => {
@@ -76,77 +58,64 @@ router.route('/')
     });
 
 router.route('/:foodId')
-    .get((req, res, next) => {
+    .get(async (req, res, next) => {
         //Check if foodId is exist --> 404
-        const getFood = async id => {
-            return await Food.findById(id);
-        };
 
-        const run = async () => {
-            const { foodId } = req.params;
-            try {
-                const food = await getFood(foodId);
-                if (food !== null) {
-                    res.successJson(wrapResponse(food));
-                }
-                else {
-                    next(createError(500));
-                }
+        const { foodId } = req.params;
+        try {
+            const food = await Food.findById(foodId);
+            if (food !== null) {
+                res.successJson(wrapResponse(food));
             }
-            catch (err) {
+            else {
                 next(createError(404));
             }
-        };
-
-        run();
+        }
+        catch (err) {
+            next(err);
+        }
     })
     .post((req, res) => {
         res.statusCode = 403;
         res.end('Post method isn\'t supported on endpoint /foods/:foodId');
     })
-    .put((req, res, next) => {
+    .put(async (req, res, next) => {
         //check if foodId is exist --> 404
-        //validate input data --> 400
-        const updateFood = async (id, updateData) => {
-            try {
-                const updatedFood = await Food.findByIdAndUpdate(id, {
-                    $set: updateData
-                }, { new: true });
-                if (updatedFood !== null) {
-                    res.successJson(wrapResponse(updatedFood));
-                }
-                else {
-                    next(createError(500));
-                }
-            }
-            catch(err) {
-                next(err);
-            }
-            
-        };
-
         const { foodId } = req.params;
         const updateData = { ...req.body };
-        updateFood(foodId, updateData);
-    })
-    .delete((req, res, next) => {
-        //check if foodId is exist --> 404
-        const removeFoodById = async id => {
-            try {
-                const removedFood = await Food.findByIdAndRemove(id);
-                if (removedFood !== null) {
-                    res.successJson(wrapResponse(removedFood));
-                }
-                else {
-                    next(createError(500));
-                }
+        try {
+            const updatedFood = await Food.findByIdAndUpdate(foodId, {
+                $set: updateData
+            }, { 
+                new: true,
+                runValidators: true,
+            });
+            if (updatedFood !== null) {
+                res.successJson(wrapResponse(updatedFood));
             }
-            catch (err) {
+            else {
                 next(createError(404));
             }
-        };
+        }
+        catch(err) {
+            next(err);
+        }
+    })
+    .delete(async (req, res, next) => {
+        //check if foodId is exist --> 404
         const { foodId } = req.params;
-        removeFoodById(foodId);
+        try {
+            const removedFood = await Food.findByIdAndRemove(foodId);
+            if (removedFood !== null) {
+                res.successJson(wrapResponse(removedFood));
+            }
+            else {
+                next(createError(404));
+            }
+        }
+        catch (err) {
+            next(err);
+        }
     });
 
 module.exports = router;

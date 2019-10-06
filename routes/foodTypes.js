@@ -3,49 +3,38 @@ const router = express.Router();
 const createError = require('http-errors');
 const wrapResponse = require('../utils/wrapResponse');
 const debug = require('debug')('food-recipes-server:food-types');
-const FoodType = require('../models/foodTypes');
+const { FoodType, validate } = require('../models/foodTypes');
 
 router.route('/')
-    .get((req, res, next) => {
-        const getFoodTypes = async () => {
-            return await FoodType.find();
-        };
-
-        const run = async () => {
-            try {
-                const foodTypes = await getFoodTypes();
-                if (foodTypes !== null)
-                    res.successJson(wrapResponse(foodTypes));
-                else
-                    next(createError(500));
-            }
-            catch(err) {
-                next(err);
-            }
-        };
-
-        run();
+    .get(async (req, res, next) => {
+        try {
+            const foodTypes = await FoodType.find().sort('name');
+            res.successJson(wrapResponse(foodTypes));
+        }
+        catch(err) {
+            next(err);
+        }
     })
-    .post((req, res) => {
+    .post(async (req, res, next) => {
         //validation input data --> error ? 400
-        const saveFoodType = async foodType => {
-            try {
-                const realFoodType = await foodType.save();
-                if (realFoodType !== null)
-                    res.successJson(wrapResponse(realFoodType));
-                else
-                    next(createError(500));
-            }
-            catch (err) {
-                next(err);
-            }
-        };
+        const { error: validateError } = validate(req.body);
+        if (validateError) {
+            debug('Error ', validateError.details[0].message);
+            next(createError(400));
+            return;
+        }
         const newFoodType = FoodType({
             key: req.body.key,
             name: req.body.name,
             icon: req.body.icon
         });
-        saveFoodType(newFoodType);
+        try {
+            const realFoodType = await newFoodType.save();
+            res.successJson(wrapResponse(realFoodType));
+        }
+        catch (err) {
+            next(err);
+        }
     })
     .put((req, res) => {
         res.statusCode = 403;

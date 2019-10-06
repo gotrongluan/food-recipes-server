@@ -1,3 +1,4 @@
+const Joi = require('@hapi/joi');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
@@ -25,10 +26,17 @@ const foodSchema = new Schema({
         required: true,
     },
     avatar: {
-        type: String
+        type: String,
+        default: 'https://www.hoidaubepaau.com/wp-content/uploads/2016/08/ca-hoi-sot-teriyaki.jpg',
     },
     ingredients: {
         type: [ ingredientSchema ],
+        validate: {
+            validator: function(v) {
+                return Array.isArray(v) && v.length > 0;
+            },
+            message: 'Ingredients must not be empty!',
+        }
     },
     steps: {
         type: String,
@@ -40,4 +48,22 @@ const foodSchema = new Schema({
 
 const Food = mongoose.model('Food', foodSchema);
 
-module.exports = Food;
+const validate = (data) => {
+    const schema = Joi.object({
+        name: Joi.string().min(5).required(),
+        avatar: Joi.string(),
+        ingredients: Joi.array().items(
+            Joi.object({
+                name: Joi.string().required(),
+                amount: Joi.number().required(),
+                unit: Joi.string().min(1)
+            })
+        ).min(2).required(),
+        steps: Joi.string().required(),
+    });
+
+    return schema.validate(data);
+};
+
+module.exports.Food = Food;
+module.exports.validate = validate;
