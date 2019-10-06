@@ -29,5 +29,6 @@ const validate = (data) => {
     });
     return schema.validate(data);
 }
+
 module.exports.FoodType = FoodType;
 module.exports.validate = validate;
