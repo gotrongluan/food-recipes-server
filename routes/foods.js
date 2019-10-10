@@ -9,9 +9,7 @@ const wrapResponse = require('../utils/wrapResponse');
 
 router.route('/')
     .get(async (req, res, next) => {
-        if (process.env.NODE_ENV === 'development') {
-            debug('Request queries: ', req.query);
-        }
+        debug('Request queries: ', req.query);
         let { page = 1, limit = 10 } = req.query;
         page = parseInt(page);
         limit = parseInt(limit);
