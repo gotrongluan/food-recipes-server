@@ -17,6 +17,7 @@ router.route('/')
     })
     .post(async (req, res, next) => {
         //validation input data --> error ? 400
+        debug('hello');
         const { error: validateError } = validate(req.body);
         if (validateError) {
             debug('Error ', validateError.details[0].message);
