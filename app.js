@@ -9,6 +9,9 @@ const debug = require('debug')('food-recipes-server:app');
 const config = require('config');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
+const passport = require('passport');
+const localAuth = require('./auth/local');
+const jwtAuth = require('./auth/jwt');
 const connectToDatabase = require('./utils/connectToDatabase');
 
 //const indexRouter = require('./routes/index');
@@ -39,9 +42,12 @@ app.use(session({
   resave: false,
   store: new FileStore(),
 }));
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use(responseJsonSuccess);
 app.use('/users', usersRouter);
+
 app.use(auth);
 app.use(express.static(path.join(__dirname, 'public')));
 
