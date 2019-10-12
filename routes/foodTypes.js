@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const createError = require('http-errors');
 const wrapResponse = require('../utils/wrapResponse');
+const { verifyUser } = require('../auth/jwt');
 const debug = require('debug')('food-recipes-server:food-types');
 const { FoodType, validate } = require('../models/foodTypes');
 
@@ -15,7 +16,7 @@ router.route('/')
             next(err);
         }
     })
-    .post(async (req, res, next) => {
+    .post(verifyUser, async (req, res, next) => {
         //validation input data --> error ? 400
         debug('hello');
         const { error: validateError } = validate(req.body);

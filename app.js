@@ -4,7 +4,7 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const responseJsonSuccess = require('./middleware/responseJsonSuccess');
-const auth = require('./middleware/auth');
+//const auth = require('./middleware/auth');
 const debug = require('debug')('food-recipes-server:app');
 const config = require('config');
 const session = require('express-session');
@@ -35,20 +35,20 @@ if (app.get('env') === 'development') {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 //app.use(cookieParser());
-app.use(session({
-  name: 'food-recipes-server-session-id',
-  secret: '2912-1611-0204-1998-2709',
-  saveUninitialized: false,
-  resave: false,
-  store: new FileStore(),
-}));
+// app.use(session({
+//   name: 'food-recipes-server-session-id',
+//   secret: '2912-1611-0204-1998-2709',
+//   saveUninitialized: false,
+//   resave: false,
+//   store: new FileStore(),
+// }));
 app.use(passport.initialize());
-app.use(passport.session());
+//app.use(passport.session());
 
 app.use(responseJsonSuccess);
 app.use('/users', usersRouter);
 
-app.use(auth);
+//app.use(auth);
 app.use(express.static(path.join(__dirname, 'public')));
 
 //app.use('/', indexRouter);

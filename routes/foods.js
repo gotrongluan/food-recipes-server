@@ -5,10 +5,10 @@ const express = require('express');
 const router = express.Router();
 const { Food, validate } = require('../models/foods');
 const wrapResponse = require('../utils/wrapResponse');
-
+const { verifyUser } = require('../auth/jwt')
 
 router.route('/')
-    .get(async (req, res, next) => {
+    .get(verifyUser, async (req, res, next) => {
         debug('Request queries: ', req.query);
         let { page = 1, limit = 10 } = req.query;
         page = parseInt(page);
