@@ -2,11 +2,13 @@ const express = require('express');
 const path = require('path');
 const createError = require('http-errors');
 const jsonSuccess = require('../middleware/jsonSuccess');
+const redirectToSecureServer = require('../middleware/secure');
 const usersRouter = require('../routes/users');
 const foodsRouter = require('../routes/foods');
 const foodTypesRouter = require('../routes/foodTypes');
 
 module.exports = async app => {
+    app.use(redirectToSecureServer);
     app.use(jsonSuccess);
     app.use(express.static(path.join(__dirname, 'public')));
     app.use('/users', usersRouter);

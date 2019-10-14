@@ -1,4 +1,6 @@
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const config = require('config');
 const debug = require('debug')('food-recipes-server:server');
 const express = require('express');
@@ -6,8 +8,8 @@ const loaders = require('./loaders');
 const normalizePort = require('./utils/normalizePort');
 
 const createServer = app => {
-    const server = http.createServer(app);
-    const onError = () => {
+    
+    const onError = port => {
         if (error.syscall !== 'listen') {
             throw error;
         }
@@ -30,18 +32,32 @@ const createServer = app => {
                 throw error;
         }
     };
-    const onListening = () => {
-        const addr = server.address();
+    const onListening = addr => {
         const bind = typeof addr === 'string'
             ? 'pipe ' + addr
             : 'port ' + addr.port;
         debug('Listening on ' + bind);
     };
     const port = normalizePort(config.get('port'));
+    const securePort = normalizePort(config.get('securePort'));
     app.set('port', port);
-    server.listen(port);
-    server.on('error', onError);
-    server.on('listening', onListening);
+    app.set('securePort', securePort);
+
+    //Setup HTTP server
+    const server = http.createServer(app);
+    server.listen(app.get('port'));
+    server.on('error', () => onError(app.get('port')));
+    server.on('listening', () => onListening(server.address()));
+
+    //Setup HTTPS server
+    const options = {
+        key: fs.readFileSync(`${__dirname}/ssl/private.key`),
+        cert: fs.readFileSync(`${__dirname}/ssl/certificate.pem`),
+    };
+    const secureServer = https.createServer(options, app);
+    secureServer.listen(app.get('securePort'));
+    secureServer.on('error', () => onError(app.get('securePort')));
+    secureServer.on('listening', () => onListening(secureServer.address()));
 };
 
 const startServer = async () => {

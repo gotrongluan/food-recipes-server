@@ -1,6 +1,7 @@
 {
     "mongoUrl": "mongodb://localhost:27017/food-recipes",
     "port": "2912",
+    "securePort": "2709",
     "host": "localhost",
     "secretKey": "1234-1234-1234-1234-1234"
 }
