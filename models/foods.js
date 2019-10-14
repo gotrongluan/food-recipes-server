@@ -1,4 +1,5 @@
 const Joi = require('@hapi/joi');
+Joi.objectId = require('joi-objectid')(Joi);                    //Joi.objectId is a method
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
@@ -65,5 +66,10 @@ const validate = (data) => {
     return schema.validate(data);
 };
 
-module.exports.Food = Food;
-module.exports.validate = validate;
+const validateFoodId = id => {
+    return Joi.objectId().required().validate(id);
+};
+
+exports.Food = Food;
+exports.validate = validate;
+exports.validateFoodId = validateFoodId;

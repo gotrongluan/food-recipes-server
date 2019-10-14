@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const createError = require('http-errors');
 const passport = require('passport');
-const { getToken } = require('../auth/jwt');
+const getToken = require('../utils/getToken');
 const debug = require('debug')('food-recipes-server:users');
 const wrapResponse = require('../utils/wrapResponse');
 const { User, validate } = require('../models/users');
@@ -20,15 +20,15 @@ router.post('/signup', async (req, res, next) => {
 			return next(err);
 		}
 		passport.authenticate('local')(req, res, () => {
-			res.successJson(wrapResponse('Successful!'));
+			res.jsonSuccess(wrapResponse('Successful!'));
 		})
 	});
 });
 
-router.post('/login', passport.authenticate('local'), (req, res) => {
+router.post('/login', passport.authenticate('local', { session: false }), (req, res) => {
 	//if this callback is called, authentication was successful!!
 	const token = getToken({ _id: req.user._id });
-	res.successJson(wrapResponse({
+	res.jsonSuccess(wrapResponse({
 		user: req.user,
 		token: token,
 	}));
@@ -39,7 +39,7 @@ router.get('/logout', async (req, res, next) => {
 		req.session.destroy();
 		res.clearCookie('food-recipes-server-session-id');
 	}
-	res.successJson(wrapResponse(null));
+	res.jsonSuccess(wrapResponse(null));
 })
 
 module.exports = router;

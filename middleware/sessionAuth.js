@@ -1,4 +1,4 @@
-const auth = (req, res, next) => {
+const sessionAuth = (req, res, next) => {
     if (!req.user) {
         let error = new Error('You are not authenticated!');
         error.status = 403;
@@ -7,4 +7,4 @@ const auth = (req, res, next) => {
     next();
 };
 
-module.exports = auth;
+module.exports = sessionAuth;
