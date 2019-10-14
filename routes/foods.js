@@ -3,9 +3,9 @@ const _ = require('lodash');
 const createError = require('http-errors');
 const express = require('express');
 const router = express.Router();
-const { Food, validate } = require('../models/foods');
+const { Food, validate, validateFoodId } = require('../models/foods');
 const wrapResponse = require('../utils/wrapResponse');
-const { verifyUser } = require('../auth/jwt')
+const verifyUser = require('../middleware/verifyUser')
 
 router.route('/')
     .get(verifyUser, async (req, res, next) => {
@@ -18,7 +18,7 @@ router.route('/')
                 .sort('-updatedAt')
                 .skip((page - 1) * limit)
                 .limit(limit);
-            res.successJson(wrapResponse(foods));
+            res.jsonSuccess(wrapResponse(foods));
         }
         catch (err) {
             next(err);
@@ -28,8 +28,7 @@ router.route('/')
         const { error: validateError } = validate(req.body);
         if (validateError) {
             debug('Error ', validateError.details[0].message);
-            next(createError(400));
-            return;
+            return next(createError(400));
         }
         const newFood = new Food({
             name: req.body.name,
@@ -39,7 +38,7 @@ router.route('/')
         });
         try {
             const realFood = await newFood.save();
-            res.successJson(wrapResponse(realFood));
+            res.jsonSuccess(wrapResponse(realFood));
         }
         catch (err) {
             next(err);
@@ -58,12 +57,16 @@ router.route('/')
 router.route('/:foodId')
     .get(async (req, res, next) => {
         //Check if foodId is exist --> 404
-
         const { foodId } = req.params;
+        const { error: validateFoodIdError } = validateFoodId(foodId);
+        if (validateFoodIdError) {
+            debug(validateFoodIdError.details[0].message);
+            return next(createError(400));
+        }
         try {
             const food = await Food.findById(foodId);
             if (food !== null) {
-                res.successJson(wrapResponse(food));
+                res.jsonSuccess(wrapResponse(food));
             }
             else {
                 next(createError(404));
@@ -80,6 +83,11 @@ router.route('/:foodId')
     .put(async (req, res, next) => {
         //check if foodId is exist --> 404
         const { foodId } = req.params;
+        const { error: validateFoodIdError } = validateFoodId(foodId);
+        if (validateFoodIdError) {
+            return next(createError(400));
+        }
+
         const updateData = { ...req.body };
         try {
             const updatedFood = await Food.findByIdAndUpdate(foodId, {
@@ -89,7 +97,7 @@ router.route('/:foodId')
                 runValidators: true,
             });
             if (updatedFood !== null) {
-                res.successJson(wrapResponse(updatedFood));
+                res.jsonSuccess(wrapResponse(updatedFood));
             }
             else {
                 next(createError(404));
@@ -102,10 +110,14 @@ router.route('/:foodId')
     .delete(async (req, res, next) => {
         //check if foodId is exist --> 404
         const { foodId } = req.params;
+        const { error: validateFoodIdError } = validateFoodId(foodId);
+        if (validateFoodIdError) {
+            return next(createError(400));
+        }
         try {
             const removedFood = await Food.findByIdAndRemove(foodId);
             if (removedFood !== null) {
-                res.successJson(wrapResponse(removedFood));
+                res.jsonSuccess(wrapResponse(removedFood));
             }
             else {
                 next(createError(404));

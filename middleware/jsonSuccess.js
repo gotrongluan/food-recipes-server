@@ -1,5 +1,5 @@
-const responseJsonSuccess = (req, res, next) => {
-    res.successJson = data => {
+const jsonSuccess = (req, res, next) => {
+    res.jsonSuccess = data => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.json(data);
@@ -7,4 +7,4 @@ const responseJsonSuccess = (req, res, next) => {
     next();
 }
 
-module.exports = responseJsonSuccess;
+module.exports = jsonSuccess;

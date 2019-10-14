@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const createError = require('http-errors');
 const wrapResponse = require('../utils/wrapResponse');
-const { verifyUser } = require('../auth/jwt');
+const verifyUser = require('../middleware/verifyUser');
 const debug = require('debug')('food-recipes-server:food-types');
 const { FoodType, validate } = require('../models/foodTypes');
 
@@ -10,7 +10,7 @@ router.route('/')
     .get(async (req, res, next) => {
         try {
             const foodTypes = await FoodType.find().sort('name');
-            res.successJson(wrapResponse(foodTypes));
+            res.jsonSuccess(wrapResponse(foodTypes));
         }
         catch(err) {
             next(err);
@@ -32,7 +32,7 @@ router.route('/')
         });
         try {
             const realFoodType = await newFoodType.save();
-            res.successJson(wrapResponse(realFoodType));
+            res.jsonSuccess(wrapResponse(realFoodType));
         }
         catch (err) {
             next(err);
