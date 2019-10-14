@@ -5,15 +5,12 @@ const passport = require('passport');
 const getToken = require('../utils/getToken');
 const debug = require('debug')('food-recipes-server:users');
 const wrapResponse = require('../utils/wrapResponse');
-const { User, validate } = require('../models/users');
+const User = require('../models/users');
+const UserValidator = require('../middleware/validator/user');
 
 //Basic authentication
 
-router.post('/signup', async (req, res, next) => {
-	const { error } = validate(req.body);
-	debug(error);
-	if (error)
-		return next(createError(400));
+router.post('/signup', UserValidator.validateBody, async (req, res, next) => {
 	//Best practice when using register method of User is use callback
 	User.register(new User({ username: req.body.username }), req.body.password, (err, user) => {
 		if (err) {

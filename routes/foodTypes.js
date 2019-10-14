@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const createError = require('http-errors');
 const wrapResponse = require('../utils/wrapResponse');
 const verifyUser = require('../middleware/verifyUser');
-const debug = require('debug')('food-recipes-server:food-types');
-const { FoodType, validate } = require('../models/foodTypes');
+const FoodType = require('../models/foodTypes');
+const FoodTypeValidator = require('../middleware/validator/foodType');
 
 router.route('/')
     .get(async (req, res, next) => {
@@ -16,15 +15,8 @@ router.route('/')
             next(err);
         }
     })
-    .post(verifyUser, async (req, res, next) => {
+    .post(verifyUser, FoodTypeValidator.validateBody, async (req, res, next) => {
         //validation input data --> error ? 400
-        debug('hello');
-        const { error: validateError } = validate(req.body);
-        if (validateError) {
-            debug('Error ', validateError.details[0].message);
-            next(createError(400));
-            return;
-        }
         const newFoodType = FoodType({
             key: req.body.key,
             name: req.body.name,

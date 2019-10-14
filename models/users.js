@@ -13,14 +13,4 @@ const userSchema = new Schema({
 userSchema.plugin(passportLocalMongoose);
 const User = mongoose.model('User', userSchema);
 
-const validate = data => {
-    const schema = Joi.object({
-        username: Joi.string().min(10).required(),
-        password: Joi.string().min(10).required(),
-        admin: Joi.boolean(),
-    });
-    return schema.validate(data);
-};
-
-module.exports.User = User;
-module.exports.validate = validate;
+module.exports = User;
