@@ -6,38 +6,21 @@ const router = express.Router();
 const Food = require('../models/foods');
 const FoodValidator = require('../middleware/validator/food');
 const wrapResponse = require('../utils/wrapResponse');
-const verifyUser = require('../middleware/verifyUser')
+const verifyUser = require('../middleware/verifyUser');
+const FoodService = require('../services/foods');
 
 router.route('/')
     .get(FoodValidator.validateParams, async (req, res, next) => {
-        debug('gay');
         const { page, limit } = req.queryParams;
-        try {
-            const foods = await Food.find()
-                .sort('-updatedAt')
-                .skip((page - 1) * limit)
-                .limit(limit);
-            res.jsonSuccess(wrapResponse(foods));
-        }
-        catch (err) {
-            next(err);
-        }    
+        const { error, value: foods } = await FoodService.getFoods(page, limit);
+        if (error) return next(error);
+        res.jsonSuccess(wrapResponse(foods));
     })
     .post(verifyUser, FoodValidator.validateBody, async (req, res, next) => {
-        const newFood = new Food({
-            name: req.body.name,
-            avatar: req.body.avatar,
-            steps: req.body.steps,
-            ingredients: [...req.body.ingredients],
-        });
-        try {
-            const realFood = await newFood.save();
-            res.jsonSuccess(wrapResponse(realFood));
-        }
-        catch (err) {
-            next(err);
-        }
-        
+        const payload = _.pick(req.body, ['name', 'avatar', 'steps', 'ingredients']);
+        const { error, value: newFood } = await FoodService.createFood(payload);
+        if (error) return next(error);
+        res.jsonSuccess(wrapResponse(newFood));    
     })
     .put((req, res) => {
         res.statusCode = 403;
@@ -52,18 +35,10 @@ router.route('/:foodId')
     .get(FoodValidator.validateId, async (req, res, next) => {
         //Check if foodId is exist --> 404
         const { foodId } = req.params;
-        try {
-            const food = await Food.findById(foodId);
-            if (food !== null) {
-                res.jsonSuccess(wrapResponse(food));
-            }
-            else {
-                next(createError(404));
-            }
-        }
-        catch (err) {
-            next(err);
-        }
+        const { error, value: food } = await FoodService.getFood(foodId);
+        if (error) return next(error);
+        if (food === null) return next(createError(404));
+        res.jsonSuccess(wrapResponse(food));
     })
     .post((req, res) => {
         res.statusCode = 403;
@@ -71,40 +46,19 @@ router.route('/:foodId')
     })
     .put(verifyUser, FoodValidator.validateId, async (req, res, next) => {
         const { foodId } = req.params;
-        const updateData = { ...req.body };
-        try {
-            const updatedFood = await Food.findByIdAndUpdate(foodId, {
-                $set: updateData
-            }, { 
-                new: true,
-                runValidators: true,
-            });
-            if (updatedFood !== null) {
-                res.jsonSuccess(wrapResponse(updatedFood));
-            }
-            else {
-                next(createError(404));
-            }
-        }
-        catch(err) {
-            next(err);
-        }
+        const updateData = _.pick(req.body, ['name', 'avatar', 'steps', 'ingredients']);
+        const { error, value: updatedFood } = await FoodService.updateFood(foodId, updateData);
+        if (error) return next(error);
+        if (updatedFood === null) return next(createError(404));
+        res.jsonSuccess(wrapResponse(updatedFood));
     })
     .delete(verifyUser, FoodValidator.validateId, async (req, res, next) => {
         //check if foodId is exist --> 404
         const { foodId } = req.params;
-        try {
-            const removedFood = await Food.findByIdAndRemove(foodId);
-            if (removedFood !== null) {
-                res.jsonSuccess(wrapResponse(removedFood));
-            }
-            else {
-                next(createError(404));
-            }
-        }
-        catch (err) {
-            next(err);
-        }
+        const { error, value: deletedFood } = await FoodService.deleteFood(foodId);
+        if (error) return next(error);
+        if (deletedFood === null) return next(createError(404));
+        res.jsonSuccess(wrapResponse(deletedFood));
     });
 
 module.exports = router;
