@@ -3,16 +3,15 @@ const _ = require('lodash');
 const createError = require('http-errors');
 const express = require('express');
 const router = express.Router();
-const { Food, validate, validateFoodId } = require('../models/foods');
+const Food = require('../models/foods');
+const FoodValidator = require('../middleware/validator/food');
 const wrapResponse = require('../utils/wrapResponse');
 const verifyUser = require('../middleware/verifyUser')
 
 router.route('/')
-    .get(verifyUser, async (req, res, next) => {
-        debug('Request queries: ', req.query);
-        let { page = 1, limit = 10 } = req.query;
-        page = parseInt(page);
-        limit = parseInt(limit);
+    .get(FoodValidator.validateParams, async (req, res, next) => {
+        debug('gay');
+        const { page, limit } = req.queryParams;
         try {
             const foods = await Food.find()
                 .sort('-updatedAt')
@@ -24,12 +23,7 @@ router.route('/')
             next(err);
         }    
     })
-    .post(async (req, res, next) => {
-        const { error: validateError } = validate(req.body);
-        if (validateError) {
-            debug('Error ', validateError.details[0].message);
-            return next(createError(400));
-        }
+    .post(verifyUser, FoodValidator.validateBody, async (req, res, next) => {
         const newFood = new Food({
             name: req.body.name,
             avatar: req.body.avatar,
@@ -55,14 +49,9 @@ router.route('/')
     });
 
 router.route('/:foodId')
-    .get(async (req, res, next) => {
+    .get(FoodValidator.validateId, async (req, res, next) => {
         //Check if foodId is exist --> 404
         const { foodId } = req.params;
-        const { error: validateFoodIdError } = validateFoodId(foodId);
-        if (validateFoodIdError) {
-            debug(validateFoodIdError.details[0].message);
-            return next(createError(400));
-        }
         try {
             const food = await Food.findById(foodId);
             if (food !== null) {
@@ -80,14 +69,8 @@ router.route('/:foodId')
         res.statusCode = 403;
         res.end('Post method isn\'t supported on endpoint /foods/:foodId');
     })
-    .put(async (req, res, next) => {
-        //check if foodId is exist --> 404
+    .put(verifyUser, FoodValidator.validateId, async (req, res, next) => {
         const { foodId } = req.params;
-        const { error: validateFoodIdError } = validateFoodId(foodId);
-        if (validateFoodIdError) {
-            return next(createError(400));
-        }
-
         const updateData = { ...req.body };
         try {
             const updatedFood = await Food.findByIdAndUpdate(foodId, {
@@ -107,13 +90,9 @@ router.route('/:foodId')
             next(err);
         }
     })
-    .delete(async (req, res, next) => {
+    .delete(verifyUser, FoodValidator.validateId, async (req, res, next) => {
         //check if foodId is exist --> 404
         const { foodId } = req.params;
-        const { error: validateFoodIdError } = validateFoodId(foodId);
-        if (validateFoodIdError) {
-            return next(createError(400));
-        }
         try {
             const removedFood = await Food.findByIdAndRemove(foodId);
             if (removedFood !== null) {
