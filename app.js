@@ -1,9 +1,6 @@
 const http = require('http');
-<<<<<<< HEAD
 const https = require('https');
 const fs = require('fs');
-=======
->>>>>>> e342e1274e5c0f8dc560bbbb77f75b27995853ac
 const config = require('config');
 const debug = require('debug')('food-recipes-server:server');
 const express = require('express');
